@@ -1,39 +1,36 @@
-﻿name: 'Xml SiteMap Generator'
-description: 'Generates an XML SiteMap for your website.'
-author: 'FullStackIndie'
+﻿name: "Xml SiteMap Generator"
+description: "Generates an XML SiteMap for your website."
+author: "FullStackIndie"
 branding:
-  icon: 'zap'
-  color: 'gray-dark'
+  icon: "zap"
+  color: "gray-dark"
 inputs:
   url:
-    description: 'Your website domain to crawl. Must start with http:// or https://'
+    description: "Your website domain to crawl. Must start with http:// or https://"
     required: true
-  sitemap_path:
-    description: 'The path to save the sitemap file to. Defaults to the current directory. SiteMap will be saved as sitemap.xml'
+  cache-key:
+    description: "The cache key to upload artifact. You will use the same key to download the artifact. Default: sitemap"
     required: false
-    default: '.'
-  log_path:
-    description: 'The path to save the log file to. Defaults to the current directory. Log will be saved as sitemap_generator_logs.txt'
-    required: false
-    default: '.'
+    default: ""
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-  
     - name: Set up .NET
       uses: actions/setup-dotnet@v3.0.3
       with:
-        dotnet-version: '7.0.x'
+        dotnet-version: "7.0.x"
 
     - name: Checkout
       uses: actions/checkout@v3.5.2
+      with:
+        repository: "FullStackIndie/sitemap-generator"
 
     - name: Build SiteMap Generator
       shell: bash
       run: |
-        mkdir ./sitemap-generator
-        cd ./sitemap-generator
-        git clone https://github.com/FullStackIndie/sitemap-generator.git .
+        # mkdir ./sitemap-generator
+        # cd ./sitemap-generator
+        # git clone https://github.com/FullStackIndie/sitemap-generator.git .
         dotnet publish ./SiteMapGenerator.csproj -c Release -r linux-x64 --self-contained true -o ./build
         chmod +x ./build/SiteMapGenerator
 
@@ -41,5 +38,13 @@ runs:
       shell: bash
       run: |
         cd ${{ github.workspace }}
-        ./sitemap-generator/build/SiteMapGenerator ${{ inputs.url }} -P="${{ inputs.sitemap_path }}" -L="${{ inputs.log_path }}"
+        ./build/SiteMapGenerator ${{ inputs.url }} -P="." -L="."
 
+    - name: Upload SiteMap Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.cache-key }}
+        path: |
+          ./build/sitemap.xml
+          ./build/sitemap_generator_logs.txt
+        retention-days: 1

@@ -6,22 +6,21 @@ A C# CLI console application that generates a site map for a website.
 
 This is a simple site map generator that takes a URL as input and creates a site map of all the pages on the website. This is meant to be used in your GitHub Actions to generate a current site map for your website as part of your deployment workflow. You can also download it and run locally on your computer.
 
-The sitemap.xml will be saved in the current directory unless you specify a different directory. The sitemap.xml will be overwritten if it already exists. This is intended behavior so your sitemap is always up to date.
 
 ***
 
 ## Use In GitHub Actions
 
-- Only use folders as the path. Sitemap will be saved as **sitemap.xml** in the specified folder.
+- url: the url you want to generate a site map for. This is required.
 
-- Logs will be saved as **sitemap_generator_logs.txt** in the specified folder.
+- cache-key: - the cache key to upload the site map to. The defualt value is 'sitemap'. You will use the same key to download the sitemap in your deployment workflow.
 
-- Make sure folder exists before running the action. If the folder does not exist the action will fail. There will be an option to choose to create the folder if it does not exist in a future release. Pull requests are welcome.
+- The Sitemap will be downloaded as **sitemap.xml** and will be overwritten if it already exists. This is intended behavior so your sitemap is always up to date. Logs are also downloaded as **sitemap_generator_logs.txt**
 
-The . in the sitemap_path and log_path is the current directory. You can specify a different directory if you want.
+
+To create and upload a sitemap as an artifact use this action in your workflow
 
 ```
-
 name: Create a Sitemap
 
 on:
@@ -39,33 +38,47 @@ jobs:
         uses: FullStackIndie/sitemap-generator@v1.0
         with:
           url: https://example.com
-          sitemap_path: .
-          log_path: .
+          cache-key: sitemap
+```
+
+To download the sitemap use this action in your workflow
+
+```
+name: Create a Sitemap
+
+on:
+  push:
+    branches: [main]
+
+  pull_request:
+    branches: [main]
+
+jobs:
+  download-site-map:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3.5.2
+
+    - name: Download Sitemap
+      uses: actions/download-artifact@v3
+        with:
+          name: sitemap
+          path: ./ 
 ```
 
 If using Asp.Net Core your paths may look like this
 
 ```
-
-name: Create a Sitemap
-
-on:
-  push:
-    branches: [main]
-
-  pull_request:
-    branches: [main]
-
 jobs:
-  create-site-map:
+  download-site-map:
     runs-on: ubuntu-latest
     steps:
-      - name: Create a Sitemap
-        uses: FullStackIndie/sitemap-generator@v1.0
-        with:
-          url: https://example.com
-          sitemap_path: ./MyProjectFolder/wwwroot
-          log_path: ./MyProjectFolder
+      - name: Download Sitemap
+        uses: actions/download-artifact@v3
+          with:
+            name: sitemap
+            path: ./app/wwwroot/
 ```
 
 ***
