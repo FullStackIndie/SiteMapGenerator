@@ -18,7 +18,7 @@ namespace SiteMapGenerator
                 .WriteTo.Console()
                 .WriteTo.File($"{Directory.GetCurrentDirectory()}/sitemap_generator_logs.txt")
                 .CreateLogger();
-            
+
             services.AddSingleton<ILogger>(log);
             services.AddScoped<SiteMapService>();
             services.AddScoped<WebCrawlerService>();
@@ -32,8 +32,9 @@ namespace SiteMapGenerator
             config.SetApplicationName("sitemap");
             config.ValidateExamples();
             config.SetInterceptor(new LogInterceptor());
+
             config.AddCommand<SiteMapCommand>("url")
-                .WithExample(new[] { "url", "https://example.com", "-f", "Daily", "-p", ".", "-L", "Information"})
+                .WithExample(new[] { "url", "https://example.com", "-f", "Daily", "-p", ".", "-L", "Information" })
                 .WithExample(new[] { "url", "https://example.com", "-f", "Daily", "-p", "/home/user1 | C:/Users/user1/Documents", "-L", "Information" });
         }
 

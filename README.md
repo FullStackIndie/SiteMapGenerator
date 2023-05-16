@@ -18,7 +18,7 @@ I would recommend using this action in your deployment workflow after you have d
 
 - url: the url you want to generate a site map for. This is required.
 
-- cache: - Should the sitemap be uploaded as an artifact to be used in another job. The default value is false. If you don't upload the artifact you can acess the sitemap using this variable **${{ steps.<id-of-your-sitemap-step>.outputs.sitemap }}**
+- cache: - Should the sitemap be uploaded as an artifact to be used in another job. The default value is false. If you don't upload the artifact you can acess the sitemap path (where it was created) using this variable **${{ steps.<id-of-your-sitemap-step>.outputs.sitemap }}**
 
 - cache-key: - the cache key to upload the site map to. The defualt value is 'sitemap'. You will use the same key to download the sitemap in your deployment workflow.
 
@@ -42,9 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create a Sitemap
-        uses: FullStackIndie/sitemap-generator@v1.0
+        uses: FullStackIndie/sitemap-generator@v1.4.0
         with:
-          url: https://example.com
+          url: https://portfolio.fullstackindie.net
           cache: 'true'
           cache-key: sitemap
 ```
@@ -75,21 +75,19 @@ jobs:
           path: ./ 
 ```
 
-### If using Asp.Net Core your paths may look like this
+### If using Asp.Net Core and want to save sitemap to wwwroot so you can access it at https://portfolio.fullstackindie.net/sitemap.xml your paths may look like this
 
 ```
-jobs:
-  download-site-map:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Sitemap
-        uses: actions/download-artifact@v3
-          with:
-            name: sitemap
-            path: ./app/wwwroot/
+- name: Download Sitemap
+  uses: actions/download-artifact@v3
+    with:
+    name: sitemap
+    path: ./MyProject/MyProject/wwwroot/    # normal Asp.NetCore Folder Structure
+    path: ./MyProject/wwwroot/               #  Asp.NetCore Single Folder Structure
+    path: ./app/wwwroot/             #  Asp.NetCore Docker Folder Structure
 ```
 
-### Use site map in the same job with other actions. Use the output of sitemap-id to access the path of where the sitemap is located.
+### Use site map in the same job with other actions. Use the output of *sitemap-id* to access the path of where the sitemap is located.
 
 - sitemap-path - is the variable that contains the path to the sitemap. You can use this variable to upload the sitemap to AWS S3 or any other storage service, or deploy to your server.
 
@@ -110,7 +108,7 @@ jobs:
     steps:
       - name: Create a Sitemap
         id: sitemap-id
-        uses: FullStackIndie/sitemap-generator@v1.2.4
+        uses: FullStackIndie/sitemap-generator@v1.4.0
         with:
           url: https://portfolio.fullstackindie.net
           cache: "false"
@@ -133,7 +131,7 @@ jobs:
 
 ***
 
-### Linux
+### Linux / Ubuntu
 
 Clone Repo into an empty Directory such as `/opt/sitemap-generator/` or `~/Workspace/Tools/sitemap-generator/`
 
@@ -147,24 +145,30 @@ cd ./build && mv SiteMapGenerator sitemap
 
 To add sitemap-generator to the path in Linux, you can use one of the following methods:
 
-1. Make a symlink in /usr/bin (or /usr/local/bin) directory:
+1. If you want sudo/root permissions 
 
-    `sudo ln -s /opt/sitemap-generator/build/sitemap.exe /usr/bin/sitemap.exe`
-
-2. Add /opt/toolname/tool.sh to $PATH variable:
-
-    `export $PATH=$PATH:/opt/sitemap-generator/build/sitemap.exe`
-
-3. Combine the above but use $HOME/.local/share/bin instead of /usr/bin:
+Make a symlink in /usr/bin (or /usr/local/bin) directory: 
 
 ```
-mkdir -p $HOME/.local/share/bin
-ln -s /opt/sitemap-generator/build/sitemap.exe $HOME/.local/share/bin/sitemap.exe
-export PATH=$PATH:$HOME/.local/share/bin
+sudo ln -s /opt/sitemap-generator/build/sitemap /usr/bin/sitemap
+export $PATH=$PATH:/usr/bin/sitemap
+```
+
+You have to run sitemap with sudo
+
+***
+
+2. If you don't need sudo/root permission:
+
+```
+mkdir -p $HOME/.local/bin
+ln -s /opt/sitemap-generator/build/sitemap $HOME/.local/bin/sitemap
+export PATH=$PATH:$HOME/.local/bin
 ```
 
 Restart a new shell and You should be able to type `sitemap` and see the help menu. If so installation is successful.
 
+If path isnt persisted in new shell check out the docs for [Ubuntu](https://help.ubuntu.com/community/EnvironmentVariables#Persistent_environment_variables)
 ***
 
 ### Windows GitBash
@@ -195,7 +199,7 @@ Under the “System Variables” section (the lower half), find the row with “
 The “Edit environment variable” UI will appear. Here, you can click “New” and type in the new path you want to add.
 
 ```
-Variable Value: C:\sitemap-generator\build
+C:\sitemap-generator\build
 ```
 
 Click OK on all windows.
@@ -233,6 +237,9 @@ sitemap https://www.example.com -p "/directory/to/save/sitemap" -f Daily -L Info
 ```
 # run globally if added the Path
 cd /var/www/html
+sudo sitemap https://www.example.com -p /var/www/html -f Daily -L Debug
+
+cd /var/www/html
 sitemap https://www.example.com -p /var/www/html -f Daily -L Debug
 
 # run from direcory where installed
@@ -260,3 +267,5 @@ sitemap https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L 
 # run from direcory where installed
 ./sitemap.exe https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
 ```
+
+Restart CMD, PowerShell, or GitBash as Administrator if having 'Access Denied' issues when saving sitemap.xml
