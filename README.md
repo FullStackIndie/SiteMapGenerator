@@ -125,9 +125,11 @@ jobs:
 
 ***
 
-## Install Locally on Windows and Linux [[Requires .Net 7 SDK]](<https://dotnet.microsoft.com/en-us/download/dotnet/7.0>)
+## Install Locally on Windows and Linux [[Requires .Net 7 SDK or the .Net 7 Runtime]](<https://dotnet.microsoft.com/en-us/download/dotnet/7.0>)
 
 - Comes with dockerfile for easy deployment for Windows, Linux, MacOS or the Cloud. I havent tested using it with Docker yet so no documentation yet
+- **Make sure you have permissions to create files and folders in the directory you specify when using the -p or --path flag to save sitemap.xml.
+    I got errors on Windows after I changed the Console implemenatation. Will debug the reason eventually hopefully and fix it**
 
 ***
 
@@ -139,8 +141,8 @@ Clone Repo into an empty Directory such as `/opt/sitemap-generator/` or `~/Works
 mkdir /opt/sitemap-generator
 cd /opt/sitemap-generator
 git clone https://github.com/FullStackIndie/sitemap-generator.git .
-dotnet build ./SiteMapGenerator.csproj -c Release -o ./build
-cd ./build && mv SiteMapGenerator.exe sitemap.exe
+dotnet publish ./SiteMapGenerator.csproj -c Release -r linux-x64 -o ./build
+cd ./build && mv SiteMapGenerator sitemap
 ```
 
 To add sitemap-generator to the path in Linux, you can use one of the following methods:
@@ -170,16 +172,15 @@ Restart a new shell and You should be able to type `sitemap` and see the help me
 ```
 cd /c/ && mkdir sitemap-generator
 cd /c/sitemap-generator && git clone https://github.com/FullStackIndie/sitemap-generator.git .
-dotnet build ./SiteMapGenerator.csproj -c Release -o ./build
+dotnet publish ./SiteMapGenerator.csproj -c Release -r win-x64 --self-contained true -o ./build
 cd ./build && mv SiteMapGenerator.exe sitemap.exe
 ```
-
 ### Windows CMD
 
 ```
 cd C:\ && mkdir sitemap-generator
 cd C:\sitemap-generator && git clone https://github.com/FullStackIndie/sitemap-generator.git .
-dotnet build ./SiteMapGenerator.csproj -c Release -o ./build
+dotnet publish ./SiteMapGenerator.csproj -c Release -r win-x64 --self-contained true -o ./build
 cd ./build && rename SiteMapGenerator.exe sitemap.exe
 ```
 
@@ -210,36 +211,52 @@ You should be able to type `sitemap` and see the help menu. If so installation i
 ### Example
 
 ```
-Usage: sitemap <url> [options] -P -L
-sitemap https://www.example.com -P="/directory/to/save/sitemap" -L="directory/to/save/logs"
+Usage: sitemap <url> [options] -p -f -L 
+sitemap https://www.example.com -p "/directory/to/save/sitemap" -f Daily -L Information
 ```
 
 - First arguement is the URL of the website you want to generate a site map for. The URL must be a valid URL and must include the protocol such as `https://` or `http://`.
-- -P is the path to save the sitemap.xml file. This is optional and if not specified the sitemap.xml will be saved in the current directory.
-- -L is the path to save the log file. This is optional and if not specified the log file will be saved in the current directory.
+- -p is the path to save the sitemap.xml file. This is optional and if not specified the sitemap.xml will be saved in the current directory.
+- -f is to specify the frequency of how often your website changes. Default is Daily. As of right now you can only specify 1 value and all 
+    links in the sitemap will be updated with that value
+- -L is the log level you want to logged to the Console and the log file that is generated. SiteMap Generator can only save log file to the current directory as of now.
 
 | Options | Required | Default | Example Value
 | :-------------- | :-------------: | ------------: | -----------: |
 | url            | true     | none       | `https://www.example.com` or `http://www.example.com`
-| -P or --path     | false         | Current Directory      | **'.'** or **'/var/www/html/blog'** or **'C:\Users\Me\Documents\My Website'**
-| -L or --log-path     | false          | Current Directory       | **'.'** or **'/var/log'** or **'C:\Logs'**
+| -p or --path     | false         | Current Directory      | **'.'** or **'/var/www/html/blog'** or **'C:\Users\Me\Documents\My Website'**
+| -L or --logLevel     | false          | Information       | Verbose, Debug, Information, Warning, Error
+| -f or --frequency    | false          | Daily       | Always, Hourly, Daily, Weekly
 
 ### Linux Example
 
 ```
+# run globally if added the Path
 cd /var/www/html
-sitemap https://www.example.com -P="/var/www/html" -L="/var/log"
+sitemap https://www.example.com -p /var/www/html -f Daily -L Debug
+
+# run from direcory where installed
+./sitemap https://www.example.com -p /var/www/html -f Daily -L Debug
 ```
 
 ### Windows GitBash Example
 
 ```
+# run globally if added the Path
 cd ~/Documents/My Website
-sitemap https://www.example.com -P="/c/Users/Me/Documents/My Website" -L="/c/Logs"
+sitemap https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
+
+# run from direcory where installed
+./sitemap.exe https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
 ```
 
 ### Windows CMD Example
 
 ```
-sitemap https://www.example.com -P="C:\Users\Me\Documents\My Website" -L="C:\Logs"
+# run globally if added the Path
+cd ~/Documents/My Website
+sitemap https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
+
+# run from direcory where installed
+./sitemap.exe https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
 ```

@@ -45,7 +45,7 @@ runs:
       shell: bash
       run: |
         cd ${{ github.workspace }}/sitemap-generator/sitemap
-        ./SiteMapGenerator ${{ inputs.url }} -P="." -L="."
+        ./SiteMapGenerator ${{ inputs.url }} -p . -f Daily -L Debug
 
     - name: Export output Path
       id: sitemap-generator
