@@ -18,7 +18,21 @@ I would recommend using this action in your deployment workflow after you have d
 
 - url: the url you want to generate a site map for. This is required.
 
-- cache: - Should the sitemap be uploaded as an artifact to be used in another job. The default value is false. If you don't upload the artifact you can acess the sitemap path (where it was created) using this variable **${{ steps.<id-of-your-sitemap-step>.outputs.sitemap }}**
+- cache: - Should the sitemap be uploaded as an artifact to be used in another job. The default value is false. If you don't upload the artifact you can acess the sitemap path (where it was created) using this variable format **${{ steps.step-id.outputs.sitemap }}**
+
+Example - **${{ steps.sitemap.outputs.sitemap }}**
+```
+    steps:
+      - name: Create a Sitemap
+        id: sitemap
+        uses: FullStackIndie/sitemap-generator@v1.4.0
+        with:
+          url: ${{ inputs.url }}
+          cache: ${{ inputs.cache }}
+          cache-key: ${{ inputs.cache-key }}
+```
+In this example github action the step id is "sitemap" so to access the sitemap path you would use this variable **${{ steps.sitemap.outputs.sitemap }}** [ Note: the output variable is also called sitemap ]
+
 
 - cache-key: - the cache key to upload the site map to. The defualt value is 'sitemap'. You will use the same key to download the sitemap in your deployment workflow.
 
@@ -87,9 +101,9 @@ jobs:
     path: ./app/wwwroot/             #  Asp.NetCore Docker Folder Structure
 ```
 
-### Use site map in the same job with other actions. Use the output of *sitemap-id* to access the path of where the sitemap is located.
+### Use site map in the same job with other actions. Use the output of *sitemap-id* to access the path of where the sitemap is located. ${{ steps.sitemap-id.outputs.sitemap }}
 
-- sitemap-path - is the variable that contains the path to the sitemap. You can use this variable to upload the sitemap to AWS S3 or any other storage service, or deploy to your server.
+- sitemap - is the variable that contains the path to the sitemap. You can use this variable to upload the sitemap to AWS S3 or any other storage service, or deploy to your server.
 
 ```
 name: >-
@@ -116,7 +130,7 @@ jobs:
 
       - name: Sync files to Aws S3
         run: |
-          aws s3 sync ${{ steps.sitemap-id.outputs.sitemap-path } 
+          aws s3 sync ${{ steps.sitemap-id.outputs.sitemap } 
           s3://my-bucket/
 
 ```
@@ -219,7 +233,8 @@ Usage: sitemap <url> [options] -p -f -L
 sitemap https://www.example.com -p "/directory/to/save/sitemap" -f Daily -L Information
 ```
 
-- First arguement is the URL of the website you want to generate a site map for. The URL must be a valid URL and must include the protocol such as `https://` or `http://`.
+- First argument is the URL of the website you want to generate a site map for. The URL must be a valid URL and must include the protocol such as `https://` or `http://`.
+ **[ Although the url is required you do not need to explicitly use it in the CLI ]**
 - -p is the path to save the sitemap.xml file. This is optional and if not specified the sitemap.xml will be saved in the current directory.
 - -f is to specify the frequency of how often your website changes. Default is Daily. As of right now you can only specify 1 value and all 
     links in the sitemap will be updated with that value
@@ -237,12 +252,18 @@ sitemap https://www.example.com -p "/directory/to/save/sitemap" -f Daily -L Info
 ```
 # run globally if added the Path
 cd /var/www/html
+sudo sitemap url https://www.example.com -p /var/www/html -f Daily -L Debug
+or
 sudo sitemap https://www.example.com -p /var/www/html -f Daily -L Debug
 
 cd /var/www/html
+sitemap url https://www.example.com -p /var/www/html -f Daily -L Debug
+or
 sitemap https://www.example.com -p /var/www/html -f Daily -L Debug
 
 # run from direcory where installed
+./sitemap url https://www.example.com -p /var/www/html -f Daily -L Debug
+or
 ./sitemap https://www.example.com -p /var/www/html -f Daily -L Debug
 ```
 
@@ -251,9 +272,13 @@ sitemap https://www.example.com -p /var/www/html -f Daily -L Debug
 ```
 # run globally if added the Path
 cd ~/Documents/My Website
+sitemap url https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
+or
 sitemap https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
 
 # run from direcory where installed
+./sitemap.exe url https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
+or
 ./sitemap.exe https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
 ```
 
@@ -262,9 +287,13 @@ sitemap https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L 
 ```
 # run globally if added the Path
 cd ~/Documents/My Website
+sitemap url https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
+or
 sitemap https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
 
 # run from direcory where installed
+./sitemap.exe url https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
+or
 ./sitemap.exe https://www.example.com -p /c/Users/Me/Documents/My Website -f Daily -L Debug
 ```
 

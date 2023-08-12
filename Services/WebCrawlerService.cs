@@ -25,77 +25,82 @@ namespace SiteMapGenerator.Services
         {
             try
             {
-                var htmlWeb = new HtmlWeb();
-                var htmlDocument = await htmlWeb.LoadFromWebAsync(url.ToString(), cancellationToken);
-
-                // Parse the HTML document and extract relevant information
-                // For example, extract links and metadata for the sitemap
-                var extractedLinks = ExtractLinks(htmlDocument).Distinct();
-
-                SitemapEntries.Add(new SitemapEntry
+                do
                 {
-                    Url = url.ToString(),
-                    LastModified = DateTime.Now,
-                    ChangeFrequency = ChangeFrequency.Daily
-                });
+                    var htmlWeb = new HtmlWeb();
+                    var htmlDocument = await htmlWeb.LoadFromWebAsync(url.ToString(), cancellationToken);
 
-                // Recursively crawl the extracted links
-                foreach (var link in extractedLinks)
-                {
-                    if (invalidUrls.Contains(link))
+                    // Parse the HTML document and extract relevant information
+                    // For example, extract links and metadata for the sitemap
+                    var extractedLinks = ExtractLinks(htmlDocument).Distinct();
+
+                    SitemapEntries.Add(new SitemapEntry
                     {
-                        return;
-                    }
-                    if (!UrlIsValidHtmlFile(link, parentUrl))
+                        Url = url.ToString(),
+                        LastModified = DateTime.Now,
+                        ChangeFrequency = ChangeFrequency.Daily
+                    });
+
+
+                    // Recursively crawl the extracted links
+                    foreach (var link in extractedLinks)
                     {
-                        invalidUrls.Add(link);
-                        _logger.Information($"Skipping link '{link}' because it isnt a valid html/php file Url");
-                        continue;
-                    }
-                    if (invalidPaths.Any(i => link.StartsWith(i)) && !link.StartsWith("//"))
-                    {
-                        invalidUrls.Add(link);
-                        _logger.Information($"Skipping link '{link}' because it isnt a valid Url");
-                        continue;
-                    }
-                    if (link.StartsWith("#"))
-                    {
-                        invalidUrls.Add(link);
-                        _logger.Information($"Skipping link '{link}' because it is a fragment Url");
-                        continue;
-                    }
-                    if (!HostIsTheSame(link, parentUrl))
-                    {
-                        string[] uri = link.Split('/');
-                        if (!uri[2].Contains(parentUrl.Host.Split('.')[1]))
+                        if (invalidUrls.Contains(link))
+                        {
+                            return;
+                        }
+                        if (!UrlIsValidHtmlFile(link, parentUrl))
+                        {
+                            invalidUrls.Add(link);
+                            _logger.Information($"Skipping link '{link}' because it isnt a valid html/php file Url");
+                            continue;
+                        }
+                        if (invalidPaths.Any(i => link.StartsWith(i)) && !link.StartsWith("//"))
+                        {
+                            invalidUrls.Add(link);
+                            _logger.Information($"Skipping link '{link}' because it isnt a valid Url");
+                            continue;
+                        }
+                        if (link.StartsWith("#"))
+                        {
+                            invalidUrls.Add(link);
+                            _logger.Information($"Skipping link '{link}' because it is a fragment Url");
+                            continue;
+                        }
+                        if (!HostIsTheSame(link, parentUrl))
+                        {
+                            string[] uri = link.Split('/');
+                            if (!uri[2].Contains(parentUrl.Host.Split('.')[1]))
+                            {
+                                invalidUrls.Add(link);
+                                _logger.Information($"Skipping link '{link}' because it is a link for a different domain");
+                                continue;
+                            }
+
+                            invalidUrls.Add(link);
+                            _logger.Information($"Skipping link '{link}' because it is a link for a different sub-domain");
+                            continue;
+                        }
+                        if (!link.Contains(parentUrl.Host))
                         {
                             invalidUrls.Add(link);
                             _logger.Information($"Skipping link '{link}' because it is a link for a different domain");
                             continue;
                         }
+                        if (link.StartsWith("//"))
+                        {
+                            var newLink = $"{parentUrl.Scheme}:{link}".TrimEnd('/');
 
-                        invalidUrls.Add(link);
-                        _logger.Information($"Skipping link '{link}' because it is a link for a different sub-domain");
-                        continue;
-                    }
-                    if (!link.Contains(parentUrl.Host))
-                    {
-                        invalidUrls.Add(link);
-                        _logger.Information($"Skipping link '{link}' because it is a link for a different domain");
-                        continue;
-                    }
-                    if (link.StartsWith("//"))
-                    {
-                        var newLink = $"{parentUrl.Scheme}:{link}".TrimEnd('/');
+                            _logger.Information($"Crawling {newLink}");
+                            await Crawl(new Uri(newLink), parentUrl, cancellationToken);
+                            continue;
+                        }
 
-                        _logger.Information($"Crawling {newLink}");
-                        await Crawl(new Uri(newLink), parentUrl, cancellationToken);
-                        continue;
+                        _logger.Information($"Crawling {link.TrimEnd('/')}");
+                        await Crawl(new Uri(link.TrimEnd('/')), parentUrl, cancellationToken);
                     }
-
-                    _logger.Information($"Crawling {link.TrimEnd('/')}");
-                    await Crawl(new Uri(link.TrimEnd('/')), parentUrl, cancellationToken);
                 }
+                while (!cancellationToken.IsCancellationRequested);
             }
             catch (HttpRequestException httpEx)
             {

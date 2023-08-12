@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using SiteMapGenerator.CLI.Commands;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -12,7 +13,7 @@ namespace SiteMapGenerator
             {
                 AnsiConsole.WriteLine("Setting up Services and Configuration");
                 var services = new ServiceCollection();
-                var app = new CommandApp(Startup.ConfigureServices(services));
+                var app = new CommandApp<SiteMapCommand>(Startup.ConfigureServices(services));
 
                 AnsiConsole.WriteLine("Setting up CLI Commands and Configuration");
                 app.Configure(Startup.ConfigureApplication);
